@@ -1,0 +1,194 @@
+<html>
+    <head>
+        <title>Rocket</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            html, body {
+                display: block;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+            #animBody {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                width: 100vw;
+                height: 30vh;
+                border-bottom: 1px solid black;
+            }
+            #car {
+                position: absolute;
+                top: 100%;
+                left: 5vw;
+                width: 5vw;
+                height: 5vh;
+                transform: translateY(-5vh);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                color: white;
+            }
+            
+            #kinematicsGraph {
+                position: absolute;
+                bottom: 0px;
+                left: 0px;
+                width: 50vw;
+                height: 70vh !important;
+            }
+            #forceGraph {
+                position: absolute;
+                bottom: 0px;
+                right: 0px;
+                width: 50vw;
+                height: 70vh !important;
+            }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.bundle.min.js"></script>
+    </head>
+    <body>
+        <div id="animBody">
+            <div id="car">rocket</div>
+        </div>
+        <div id="kinematicsGraph">
+            <canvas id="kinematicsChart"></canvas>
+        </div>
+        <div id="forceGraph">
+            <canvas id="forceChart"></canvas>
+        </div>
+        <script type="text/javascript">
+            const car = document.getElementById("car");
+            const carStartX = car.getBoundingClientRect().left;
+            const k = 2, mu = 0.1;
+            const animTimeStep = 15, dt = 0.01;
+            const fuelContent = 0.23667;
+            let rocketBodyMass = 0.3, rocketMass = rocketBodyMass + fuelContent;
+            const massLossPerUnitTime = 0.1;
+            let v = 0, a = 0, s = carStartX;
+            let frictionalForce, resistiveForce, Fnet, engineForwardForce;
+            let renderIntervalID;
+            const worldScale = 0.01;
+
+            const kinematicsChartCanvas = document.getElementById("kinematicsChart");
+            kinematicsChartCanvas.height = kinematicsChartCanvas.parentElement.height;
+            const ctx1 = kinematicsChartCanvas.getContext("2d");
+
+            let kinematicsChartData = {
+                labels: [],
+                datasets: [{
+                    label: "velocity",
+                    fill: false,
+                    backgroundColor: "rgba(0, 0, 0, 0.4)",
+                    borderColor: "rgba(0, 0, 0, 0.4)",
+                    data: []
+                }, {
+                    label: "acceleration",
+                    fill: false,
+                    backgroundColor: "rgba(255, 0, 0, 0.4)",
+                    borderColor: "rgba(255, 0, 0, 0.4)",
+                    data: []
+                }]
+            };
+            let kinematicsChartOptions = {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+
+                        }
+                    }]
+                },
+                responsive: true
+            };
+            let kinematicsChart = new Chart(ctx1, {
+                type: "line",
+                data: kinematicsChartData,
+                options: kinematicsChartOptions
+            });
+
+            const forceChartCanvas = document.getElementById("forceChart");
+            forceChartCanvas.height = forceChartCanvas.parentElement.height;
+            const ctx2 = forceChartCanvas.getContext("2d");
+
+            let forceChartData = {
+                labels: [],
+                datasets: [{
+                    label: "resistiveForce",
+                    fill: false,
+                    backgroundColor: "rgba(125, 0, 0, 0.4)",
+                    borderColor: "rgba(125, 0, 0, 0.4)",
+                    data: []
+                }, {
+                    label: "frictionalForce",
+                    fill: false,
+                    backgroundColor: "rgba(0, 255, 0, 0.4)",
+                    borderColor: "rgba(0, 255, 0, 0.4)",
+                    data: []
+                }, {
+                    label: "engineForwardForce",
+                    fill: false,
+                    backgroundColor: "rgba(0, 0, 255, 0.4)",
+                    borderColor: "rgba(0, 0, 255, 0.4)",
+                    data: []
+                }]
+            };
+            let forceChartOptions = {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            // min: 0,
+                            // max: 8e-26
+                        }
+                    }]
+                },
+                responsive: true
+            };
+            let forceChart = new Chart(ctx2, {
+                type: "line",
+                data: forceChartData,
+                options: forceChartOptions
+            });
+
+            function render() {
+                engineForwardForce = 10;
+                resistiveForce = k * v;
+                if (v > 0) {
+                    frictionalForce = mu * 9.81 * rocketMass;
+                } else frictionalForce = 0;
+                if (rocketMass > rocketBodyMass) {
+                    car.style.backgroundColor = `hsl(0, 100%, ${100*(rocketMass-rocketBodyMass)/fuelContent}%)`;
+                    car.innerHTML = `${Math.round(100*(rocketMass-rocketBodyMass)/fuelContent)}%`;
+                    rocketMass -= massLossPerUnitTime * dt;
+                } else {
+                    // fuel has been exhausted
+                    car.style.backgroundColor = "black";
+                    engineForwardForce = 0;
+                }
+
+                Fnet = engineForwardForce - resistiveForce - frictionalForce;
+                a = Fnet / rocketMass;
+                v += a * dt;
+                s += (v * dt) * (1/worldScale);
+                car.style.left = s;
+                if (Math.round((v + Number.EPSILON)*1000)/1000 == 0) clearInterval(renderIntervalID);
+                updateCharts();
+            }
+
+            function updateCharts() {
+                kinematicsChartData.labels.push('')
+                kinematicsChartData.datasets[0].data.push(v);
+                kinematicsChartData.datasets[1].data.push(a);
+                kinematicsChart.update(0);
+                forceChartData.labels.push('');
+                forceChartData.datasets[0].data.push(-resistiveForce);
+                forceChartData.datasets[1].data.push(-frictionalForce);
+                forceChartData.datasets[2].data.push(engineForwardForce);
+                forceChart.update(0);
+            }
+
+            renderIntervalID = setInterval(render, animTimeStep);
+        </script>
+    </body>
+</html>

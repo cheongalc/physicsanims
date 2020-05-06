@@ -1,0 +1,231 @@
+<html>
+    <head>
+        <title>Bungee Jumper</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            html, body {
+                display: block;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+            #animBody {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                width: 30vw;
+                height: 100vh;
+            }
+            #man {
+                position: absolute;
+                top: 100px;
+                left: 50%;
+                transform: translate(-50%, 1vw);
+                width: 2vw;
+                height: 2vw;
+                border-radius: 50%;
+                background-color: black;
+                z-index: 2;
+                box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.45);
+            }
+            #startMark {
+                position: absolute;
+                background-color: #333;
+                top: 100px;
+                left: 0px;
+                width: 30vw;
+                z-index: 2;
+                height: 1px;
+            }
+            #startMark::after {
+                text-align: right;
+                display: block;
+                margin-right: 16px;
+                content: "Start Position";
+                font-weight: bold;
+                z-index: 2;
+                color: #333;
+            }
+            #bounceMark {
+                position: absolute;
+                background-color: #333;
+                top: 500px;
+                left: 0px;
+                width: 30vw;
+                z-index: 2;
+                height: 1px;
+            }
+            #bounceMark::after {
+                text-align: right;
+                display: block;
+                margin-right: 16px;
+                content: "Max Unstretched Length";
+                font-weight: bold;
+                z-index: 2;
+                color: #333;
+            }
+            #string {
+                position: absolute;
+                background-color: black;
+                top: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 0.2vw;
+                height: calc(100vh - 100px);
+            }
+            #hider {
+                position: absolute;
+                top: 100px;
+                left: 50%;
+                transform: translate(-50%, 1vw);
+                width: 1vw;
+                height: calc(100vh - 100px);
+                z-index: 1;
+                background-color: white;
+            }
+            #bounceCounter {
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                transform: translate(-50%);
+                width: 30vw;
+                height: 60px;
+                display: flex;
+                z-index: 2;
+                justify-content: center;
+                align-items: center;
+                font-size: 2vw;
+                font-weight: bold;
+            }
+            #energyGraph {
+                position: absolute;
+                top: 0px;
+                right: 0px;
+                width: 70vw;
+                height: 100vh;
+                border-left: 1px solid black;
+            }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.bundle.min.js"></script>
+    </head>
+    <body>
+        <div id="animBody">
+            <div id="man"></div>
+            <div id="startMark"></div>
+            <div id="bounceMark"></div>
+            <div id="string"></div>
+            <div id="hider"></div>
+            <div id="bounceCounter">Bounces: 0</div>
+        </div>
+        <div id="energyGraph">
+            <canvas id="energyChart"></canvas>
+        </div>
+        <script type="text/javascript">
+            const man = document.getElementById("man");
+            const manHeight = man.getBoundingClientRect().height;
+            const hider = document.getElementById("hider");
+            const bounceCounter = document.getElementById("bounceCounter");
+            const stringElem = document.getElementById("string");
+            const g = 9.81;
+            const startPos = 100;
+            const stringLength = 400;
+            const mMan = 70;
+            const k = 20;
+            const maxReturnSpeed = 91;
+            let s = 0, v = 0, a = g, animTimeStep = 15, dt = 0.1;
+            let toggle1 = false, toggle2 = false, numBounces = 0;
+
+            const canvas = document.getElementById("energyChart");
+            canvas.width = 0.7 * window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext("2d");
+            let chartData = {
+                labels: [],
+                datasets: [{
+                    label: "GPE",
+                    fill: false,
+                    backgroundColor: "rgba(255, 0, 0, 0.4)",
+                    borderColor: "rgba(255, 0, 0, 0.4)",
+                    data: []
+                }, {
+                    label: "KE",
+                    fill: false,
+                    backgroundColor: "rgba(0, 255, 0, 0.4)",
+                    borderColor: "rgba(0, 255, 0, 0.4)",
+                    data: []
+                }, {
+                    label: "EPE",
+                    fill: false,
+                    backgroundColor: "rgba(0, 0, 255, 0.4)",
+                    borderColor: "rgba(0, 0, 255, 0.4)",
+                    data: []
+                }]
+            };
+            let options = {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            min: 0
+                        }
+                    }]
+                }
+            };
+            let energyChart = new Chart(ctx, {
+                type: "line",
+                data: chartData,
+                options: options
+            });
+
+            function render() {
+                bounceCounter.textContent = '';
+                bounceCounter.appendChild(document.createTextNode(`Bounces: ${numBounces}`));
+                if (s+manHeight/2 > stringLength) {
+                    let Fnet = mMan * g - (k * (s - stringLength));
+                    a = Fnet / mMan;
+                    v = 0.997 * v;
+                    stringElem.style.backgroundColor = "red";
+                } else {
+                    a = g;
+                    stringElem.style.backgroundColor = "green";
+                }
+                if (v < 0) {
+                    toggle1 = true;
+                    if (toggle1) {
+                        if (!toggle2) numBounces++;
+                        toggle2 = true;
+                    }
+                } else {
+                    toggle1 = false;
+                    toggle2 = false;
+                }
+                v += a * dt;
+                s += v * dt;
+                man.style.top = startPos + s;
+                hider.style.top = startPos + s;
+            }
+            setInterval(render, animTimeStep);
+
+            function updateCharts() {
+                let GPE = mMan * g * (window.innerHeight - startPos - s);
+                let KE = 0.5 * mMan * (v**2);
+                let EPE = 0;
+                if (s+manHeight/2 > stringLength) {
+                    EPE = 0.5 * k * ((s - stringLength)**2);
+                }
+                chartData.labels.push('');
+                chartData.datasets[0].data.push(GPE);
+                chartData.datasets[1].data.push(KE);
+                chartData.datasets[2].data.push(EPE);
+                if (chartData.labels.length > 100) {
+                    chartData.labels.shift();
+                    chartData.datasets[0].data.shift();
+                    chartData.datasets[1].data.shift();
+                    chartData.datasets[2].data.shift();
+                }
+                energyChart.update(0);
+            }
+            setInterval(updateCharts, 100);
+        </script>
+    </body>
+</html>

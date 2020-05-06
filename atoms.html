@@ -1,0 +1,193 @@
+<html>
+    <head>
+        <title>Tritium-Deuterium collision</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            html, body {
+                display: block;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+            #animBody {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                width: 100vw;
+                height: 30vh;
+            }
+            #tritiumNucleus {
+                position: absolute;
+                top: 15vh;
+                left: 2vw;
+                width: 3vw;
+                height: 3vw;
+                transform: translateY(-1.5vw);
+                border-radius: 50%;
+                background-color: darkblue;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                box-shadow: 0px 2px 5px rgba(0,0,0,0.45);
+            }
+            #deuteriumNucleus {
+                position: absolute;
+                top: 15vh;
+                right: 2vw;
+                width: 3vw;
+                height: 3vw;
+                transform: translateY(-1.5vw);
+                border-radius: 50%;
+                background-color: darkred;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                box-shadow: 0px 2px 5px rgba(0,0,0,0.45);
+            }
+            #kinematicsGraph {
+                position: absolute;
+                bottom: 0px;
+                left: 0px;
+                width: 50vw;
+                height: 70vh !important;
+            }
+            #forceGraph {
+                position: absolute;
+                bottom: 0px;
+                right: 0px;
+                width: 50vw;
+                height: 70vh !important;
+            }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.bundle.min.js"></script>
+    </head>
+    <body>
+        <div id="animBody">
+          <div id="tritiumNucleus">T</div>
+          <div id="deuteriumNucleus">D</div>
+        </div>
+        <div id="kinematicsGraph">
+            <canvas id="kinematicsChart"></canvas>
+        </div>
+        <div id="forceGraph">
+            <canvas id="forceChart"></canvas>
+        </div>
+        <script type="text/javascript">
+            const tritiumNucleus = document.getElementById("tritiumNucleus");
+            const deuteriumNucleus = document.getElementById("deuteriumNucleus");
+            const tritiumInitialX = tritiumNucleus.getBoundingClientRect().left + tritiumNucleus.getBoundingClientRect().width/2;
+            const deuteriumInitialX = deuteriumNucleus.getBoundingClientRect().left + deuteriumNucleus.getBoundingClientRect().width/2;
+            const k = 8.9875517923 * 10**9, qT = qD = 1.60217662 * 10**-19
+            const u = 1.66053906660* 10**-27;
+            const startSpeed = 1;
+
+            let mT = 3.0160492 * u, mD = 2.01410177811 * u, vT = startSpeed, vD = -startSpeed, aT, aD, sT=tritiumInitialX, sD=deuteriumInitialX, coulombForce;
+            let animTimeStep = 15, dt = 0.01;
+            let renderIntervalID;
+            const worldScale = 0.001;
+
+            const kinematicsChartCanvas = document.getElementById("kinematicsChart");
+            kinematicsChartCanvas.height = kinematicsChartCanvas.parentElement.height;
+            const ctx1 = kinematicsChartCanvas.getContext("2d");
+
+            let kinematicsChartData = {
+                labels: [],
+                datasets: [{
+                    label: "velocityTritium",
+                    fill: false,
+                    backgroundColor: "rgba(0, 0, 255, 0.4)",
+                    borderColor: "rgba(0, 0, 255, 0.4)",
+                    data: []
+                }, {
+                    label: "velocityDeuterium",
+                    fill: false,
+                    backgroundColor: "rgba(255, 0, 0, 0.4)",
+                    borderColor: "rgba(255, 0, 0, 0.4)",
+                    data: []
+                }]
+            };
+            let kinematicsChartOptions = {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            min: -1.0,
+                            max: 1.5
+                        }
+                    }]
+                },
+                responsive: true
+            };
+            let kinematicsChart = new Chart(ctx1, {
+                type: "line",
+                data: kinematicsChartData,
+                options: kinematicsChartOptions
+            });
+
+            const forceChartCanvas = document.getElementById("forceChart");
+            forceChartCanvas.height = forceChartCanvas.parentElement.height;
+            const ctx2 = forceChartCanvas.getContext("2d");
+
+            let forceChartData = {
+                labels: [],
+                datasets: [{
+                    label: "coulombForce",
+                    fill: false,
+                    backgroundColor: "rgba(0, 0, 0, 0.4)",
+                    borderColor: "rgba(0, 0, 0, 0.4)",
+                    data: []
+                }]
+            };
+            let forceChartOptions = {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            min: 0,
+                            max: 8e-26
+                        }
+                    }]
+                },
+                responsive: true
+            };
+            let forceChart = new Chart(ctx2, {
+                type: "line",
+                data: forceChartData,
+                options: forceChartOptions
+            });
+
+            function render() {
+                let r = Math.abs(sD - sT) * worldScale;
+                coulombForce = (k * qT * qD)/(r**2);
+                // tritium
+                aT = -coulombForce / mT;
+                vT += aT * dt;
+                sT += (vT * dt) * (1/worldScale);
+                tritiumNucleus.style.left = sT;
+                // deuterium
+                aD = coulombForce / mD;
+                vD += aD * dt;
+                sD += (vD * dt) * (1/worldScale)
+                deuteriumNucleus.style.left = sD;
+                console.log(`r=${r}, coulombForce=${coulombForce}`);
+                console.log(`T: aT=${aT}, vT=${vT}, sT=${sT}`);
+                console.log(`D: aD=${aD}, vD=${vD}, sD=${sD}`);
+                updateCharts();
+                if (sT < 0) clearInterval(renderIntervalID);
+            }
+
+            function updateCharts() {
+                kinematicsChartData.labels.push('')
+                kinematicsChartData.datasets[0].data.push(vT);
+                kinematicsChartData.datasets[1].data.push(vD);
+                kinematicsChart.update(0);
+                forceChartData.labels.push('');
+                forceChartData.datasets[0].data.push(coulombForce);
+                forceChart.update(0);
+            }
+
+            renderIntervalID = setInterval(render, animTimeStep);
+        </script>
+    </body>
+</html>

@@ -1,0 +1,170 @@
+<html>
+    <head>
+        <title>Description for rocket anim</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+             html, body {
+                display: block;
+                margin: 0;
+                padding: 0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: large;
+            }
+            .content {
+                max-width: 960px;
+                margin: auto;
+                padding: 16px;
+            }
+            h2 {
+                color: #4d4d4d;
+            }
+            h3 {
+                color: #7e7e7e;
+            }
+            .center {
+                text-align: center;
+            }
+            pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            } 
+            .spriteContainer {
+                width: 100%;
+                height: 100px;
+                position: relative;
+            }
+            .car {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 70px;
+                height: 40px;
+                transform: translate(-50%, -50%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                background-color: red;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css">
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+        <div class="content">
+            <h1>rocket</h1>
+            <h2>the task</h2>
+                <p>A toy car with a rocket engine moves along a horizontal track.</p>
+                <p>As the toy car moves, it experiences friction from the ground and drag force from the air.</p>
+                <p>The rocket engine's fuel also depletes as the toy car moves. The mass of the toy car therefore decreases over time.</p>
+                <p>Eventually, when the rocket engine's fuel is exhausted, the rocket engine no longer supplies a forward force.</p>
+                <p>The toy car thus grinds to a halt.</p>
+                <p>Animate this motion, and plot velocity-time, acceleration-time and force-time graphs.</p>
+            <h2>summary of what i did</h2>
+                <p>Using the 3 web languages HTML, CSS and JavaScript, I created a webpage to simulate this interaction. The animation is powered by JavaScript. I also used an online JavaScript library, <code>chart.js</code>, in order to plot the graphs.</p>
+                <p>Below, I will go into detail how the animation was made.</p>
+            <h2>defining constants</h2>
+                <p>For simplicity, I used constants that were not very realistic.</p>
+                <ul>
+                    <li>Mass of rocket body, $\text{rocketBodyMass}=0.3\text{kg}$</li>
+                    <li>Initial mass of fuel, $\text{fuelContent}=0.23667\text{kg}$. This value was selected arbitrarily so the car would stop nicely at the end of the screen.</li>
+                    <li>Mass of loaded rocket, $\text{rocketMass}=\text{rocketBodyMass}+\text{fuelContent}$</li>
+                    <li>Mass loss per second, $\text{massLossPerSecond}=0.1\text{kg}$. Note that since each frame of the animation lasts for a fraction of a second, the true mass loss experienced by the car per frame is actually lesser than this amount.</li>
+                    <li>Engine forward force, $\text{engineForwardForce}=10\text{N}$</li>
+                    <li>Drag proportionality constant, $k=2\text{kgs}^{-1}$</li>
+                    <li>Coefficient of kinetic friction, $\mu_k=0.1$</li>
+                </ul>
+                <h3>initial values</h3>
+                    <p>Since the car started from rest, $v_\text{initial}=0$ and $a_\text{initial}=0$.</p>
+                <h3>the world scale</h3>
+                    <p>Similarly to the atoms animation, in order for the animation to be viewed on screen, I scaled the world down to $0.01$.</p>
+                <h3>all the definitions, put together</h3>
+<pre><code class="js">const rocketBodyMass = 0.3;
+const fuelContent = 0.23667;
+let rocketMass = rocketBodyMass + fuelContent;
+const massLossPerSecond = 0.1;
+let engineForwardForce = 10;
+const k = 2, mu = 0.1;
+let v = 0, a = 0;
+const worldScale = 0.01;
+</code></pre>
+            <h2>how the code works</h2>
+                <h3>summary of how the code works</h3>
+                    <p>For every small time interval $dt=0.01\text{s}$, I calculated the displacement of the toy car and redrew the car with the new displacement.</p>
+                    <p>When this process is done fast enough, the brain perceives it to be a smooth animation.</p>
+                <h3>step 1: drawing the toy car</h3>
+                    <p>The toy car was a HTML <code>div</code> element styled to look like a rectangle. The background colour was set to red and the intensity of the red represented the fuel level of the car.</p>
+                    <div class="spriteContainer">
+                        <div class="car">100%</div>
+                    </div>
+                <h3>step 2: compute net force</h3>
+                    <p>As long as there is fuel in the car, $\text{engineForwardForce}=10\text{N}$. If not, $\text{engineForwardForce}=0\text{N}$.</p>
+<pre><code class="js">let engineForwardForce = 10;
+if (rocketMass > rocketBodyMass) {
+    rocketMass -= massLossPerSecond * dt;
+} else {
+    // fuel has been exhausted
+    engineForwardForce = 0;
+}
+</code></pre>
+                    <p>Next, $\text{resistiveForce}=kv$.</p>
+                    <p>Lastly, as long as the car is moving, $\text{frictionalForce}=\mu_kN=\mu_k(\text{rocketMass})(g)$.</p>
+<pre><code class="js">if (v > 0) {
+    frictionalForce = mu * 9.81 * rocketMass;
+} else frictionalForce = 0;
+</code></pre>
+                    <p>Thus, the net force on the car can be calculated as follows:</p>
+                    <p class="center">$F_\text{net}=\text{engineForwardForce} - \text{resistiveForce} - \text{frictionalForce}$</p>
+                <h3>step 3: compute acceleration, then velocity, then displacement</h3>
+                    <p>By Newton's Second Law, $a=\frac{F_\text{net}}{\text{rocketMass}}$.</p>
+                    <p>Since we are working with small time intervals $dt$, we can do the following:</p>
+                    <p class="center">$dv=adt$</p>
+                    <p class="center">$ds=vdt$</p>
+                    <p>Once we obtain the infinitesimal changes in velocity and displacement $dv$ and $ds$, we can then add these to the original velocities and displacements.</p>
+                    <p>Note that $\frac{1}{\text{worldScale}}$ must be multiplied to the displacement so the scale of the animation on the screen is correct.</p>
+<pre><code class="js">a = Fnet / rocketMass;
+v += a * dt;
+s += (v * dt) * (1/worldScale);
+</code></pre>
+                <h3>step 4: redraw the car</h3>
+                    <p>We can then redraw the car using this new displacement.</p>
+                    <p>In the web language CSS, there is a property <code>left</code> which specifies how many pixels from the <b>left of the screen</b> a particular shape should be drawn.</p>
+                    <p>By overwriting the car's <code>left</code> property in quick succession, we can make it seem like the car is moving.</p>
+<pre><code class="js">car.style.left = s;
+</code></pre>
+                <h3>step 5: repeat steps 1-4 really quickly</h3>
+                <h3>the relevant code for the animation</h3>
+<pre><code class="js">function render() {
+    engineForwardForce = 10;
+    resistiveForce = k * v;
+    if (v > 0) {
+        frictionalForce = mu * 9.81 * rocketMass;
+    } else frictionalForce = 0;
+    if (rocketMass > rocketBodyMass) {
+        rocketMass -= massLossPerSecond * dt;
+    } else {
+        // fuel has been exhausted
+        engineForwardForce = 0;
+    }
+    Fnet = engineForwardForce - resistiveForce - frictionalForce;
+    a = Fnet / rocketMass;
+    v += a * dt;
+    s += (v * dt) * (1/worldScale);
+    car.style.left = s;
+}
+</code></pre>
+            <a href="../index.html">Go Back</a>
+        </div>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script>
+            MathJax = {
+                tex: {
+                    inlineMath: [['$', '$']]
+                }
+            };
+        </script>
+        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

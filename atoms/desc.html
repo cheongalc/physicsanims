@@ -95,7 +95,7 @@ let vT = startSpeed, vD = -startSpeed;</code></pre>
                     <p>$\frac{1}{\text{worldScale}}$ was then multiplied to the physical quantities during calculations so that the movements of the nuclei was obvious enough to view on a computer screen.</p>
             <h2>how the code works</h2>
                 <h3>summary of how the code works</h3>
-                    <p>For every small time interval $dt=15\text{ms}$, I calculated the displacements of the 2 nuclei and redrew the nuclei with the new displacements.</p>
+                    <p>For every small time interval $dt=0.01\text{s}$, I calculated the displacements of the 2 nuclei and redrew the nuclei with the new displacements.</p>
                     <p>When this process is done fast enough, the brain perceives this to be a smooth animation.</p>
                 <h3>step 1: draw the nuclei</h3>
                     <p>The nuclei were drawn using HTML. They are <code>div</code> elements that are styled to look like circles:</p>
@@ -130,7 +130,7 @@ sD += (vD * dt) * (1/worldScale);</code></pre>
 deuteriumNucleus.style.left = sD;</code></pre>
                 <h3>step 8: repeat steps 1-7 really fast</h3>
                     <p>By updating the positions of the nuclei enough, the nuclei seemed like they were moving.</p>
-                <h3>relevant code</h3>
+                <h3>the relevant code for the animation</h3>
 <pre><code class="js">function render() {
     let r = Math.abs(sD - sT) * worldScale;
     coulombForce = (k * qT * qD)/(r**2);

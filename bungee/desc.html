@@ -1,0 +1,186 @@
+<html>
+    <head>
+        <title>Description for bungee anim</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+             html, body {
+                display: block;
+                margin: 0;
+                padding: 0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: large;
+            }
+            .content {
+                max-width: 960px;
+                margin: auto;
+                padding: 16px;
+            }
+            h2 {
+                color: #4d4d4d;
+            }
+            h3 {
+                color: #7e7e7e;
+            }
+            .center {
+                text-align: center;
+            }
+            pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            } 
+            .spriteContainer {
+                width: 100%;
+                height: 100px;
+                position: relative;
+            }
+            .man {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background-color: black;
+                z-index: 3;
+                box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.45);
+            }
+            .string {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 4px;
+                height: 100px;
+                z-index: 1;
+                background-color: black;
+            }
+            .hider {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                width: 24px;
+                height: 50%;
+                border: 1px solid red;
+                background-color: rgba(255, 255, 255, 0.75);
+                z-index: 2;
+                transform: translate(-50%);
+            }
+        </style>
+    </head>
+    <body>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css">
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+        <div class="content">
+            <h1>bungee</h1>
+            <h2>the task</h2>
+                <p>A man does a bungee jump.</p>
+                <p>He falls a certain distance before the bungee cord attached to him begins to stretch.</p>
+                <p>Soon, the rope stretches till a point where the elastic force is sufficient to counteract his weight and he bounces up.</p>
+                <p>Animate this up-down oscillation of the man, and plot energy-time graphs.</p>
+            <h2>summary of what i did</h2>
+                <p>Using the 3 web languages HTML, CSS and JavaScript, I created a webpage to simulate this interaction. The animation is powered by JavaScript. I also used an online JavaScript library, <code>chart.js</code>, in order to plot the graphs.</p>
+                <p>Below, I will go into detail how the animation was made.</p>
+            <h2>defining constants</h2>
+                <p>For simplicity, I assumed that 1 pixel of the screen is equivalent to 1 metre.</p>
+                <ul>
+                    <li>$g=9.81\text{ms}^{-2}$</li>
+                    <li>Starting position of man from top of screen $\text{startPos}=100\text{px}$</li>
+                    <li>Length of bungee cord before stretching occurs $\text{stringLength}=400\text{px}$</li>
+                    <li>Mass of man $\text{mMan}=70\text{kg}$</li>
+                    <li>Spring constant of bungee cord $k=20\text{Nm}$</li>
+                </ul>
+<pre><code class="js">const g = 9.81;
+const startPos = 100;
+const stringLength = 400;
+const mMan = 70;
+const k = 20;
+</code></pre>
+            <h2>how the code works</h2>
+            <h3>summary of how the code works</h3>
+                <p>For every small time interval $dt=0.1\text{s}$, I calculated the displacement of the man and redrew the man with the new displacement.</p>
+                <p>When this process is done fast enough, the brain perceives it as a smooth animation.</p>
+            <h3>step 1: draw the bungee setup</h3>
+                <p>The man is a HTML <code>div</code> element styled to look like a black circle.</p>
+                <div class="spriteContainer">
+                    <div class="man"></div>
+                </div>
+                <p>The string is another HTML <code>div</code> element styled to look like a long rectangle.</p>
+                <div class="spriteContainer">
+                    <div class="string"></div>
+                </div>
+                <p>To create the illusion of the string getting longer or shorter as the man fell down, I drew a another rectangle with the same colour as the background. For clarity, I have highlighted its border red.</p>
+                <p>This rectangle's movement was synchroznied with the man so as to hide the string that is below the man.</p>
+                <div class="spriteContainer">
+                    <div class="man"></div>
+                    <div class="string"></div>
+                    <div class="hider"></div>
+                </div>
+            <h3>step 2: calculate forces on man</h3>
+                <p>When the string is not taut, the man is in free fall assuming that there is no air resistance.</p>
+                <p class="center">$F_\text{net}=(\text{mMan})(g)$</p>
+                <p>When the string is taut, the net force on the man is his weight minus the elastic force.</p>
+                <p class="center">$F_\text{net}=(\text{mMan})(g) - kx$</p>
+                <p>The extension $x$ can then be found from the difference between the man's displacement and the string length.</p>
+                <p class="center">$x=s_\text{man}-\text{stringLength}$</p>
+                <p>Put together, we get this code:</p>
+<pre><code class="js">if (s+manHeight/2 > stringLength) {
+    let Fnet = mMan * g - (k * (s - stringLength));
+    a = Fnet / mMan;
+} else {
+    a = g;
+}</code></pre>
+            <h3>step 3: factor in energy loss</h3>
+                <p>To make the animation realistic, energy loss must be factored in to prevent the man from oscillating up and down infinitely.</p>
+                <p>We can model energy loss by reducing the man's velocity for every small time interval $dt$ that the bungee cord is stretched.</p>
+                <p>This can be reflected in the above code by adding 1 line:</p>
+<pre><code class="js">if (s+manHeight/2 > stringLength) {
+    let Fnet = mMan * g - (k * (s - stringLength));
+    a = Fnet / mMan;
+    v = 0.997 * v;
+} else {
+    a = g;
+}</code></pre>
+            <h3>step 4: calculate velocity and displacement</h3>
+                <p>As we are dealing with small time intervals $dt$, we can do the following:</p>
+                <p class="center">$dv=adt$</p>
+                <p class="center">$ds=vdt$</p>
+                <p>Once we get the infinitesimal changes in velocity and displacement $dv$ and $ds$, we can add them to the actual velocities and displacements.</p>
+<pre><code class="js">v += a * dt;
+s += v * dt;</code></pre>
+            <h3>step 5: redrawing the man</h3>
+                <p>I then redraw the man using this new displacement.</p>
+                <p>In the web language CSS, there is a property <code>top</code> which specifies how many pixels from the <b>top of the screen</b> a particular shape should be drawn.</p>
+                <p>Thus, by overwriting the <code>top</code> property of the man and the white rectangle behind the man in quick succession, we can make it seem like they are moving.</p>
+<pre><code class="js">man.style.top = startPos + s;
+hider.style.top = startPos + s;</code></pre>
+            <h3>step 6: repeat steps 1- 5 really quickly</h3>
+            <h3>the relevant code for the animation</h3>
+<pre><code class="js">function render() {
+    if (s+manHeight/2 > stringLength) {
+        let Fnet = mMan * g - (k * (s - stringLength));
+        a = Fnet / mMan;
+        v = 0.997 * v;
+    } else {
+        a = g;
+    }
+    v += a * dt;
+    s += v * dt;
+    man.style.top = startPos + s;
+    hider.style.top = startPos + s;
+}
+</code></pre>
+            <a href="../index.html">Go Back</a>
+        </div>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script>
+            MathJax = {
+                tex: {
+                    inlineMath: [['$', '$']]
+                }
+            };
+        </script>
+        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

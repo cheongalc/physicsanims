@@ -29,8 +29,8 @@
                 justify-content: center;
             }
             #tritiumNucleus {
-                width: 3vw;
-                height: 3vw;
+                width: 48px;
+                height: 48px;
                 border-radius: 50%;
                 background-color: darkblue;
                 display: flex;
@@ -42,8 +42,8 @@
             }
             #deuteriumNucleus {
                 display: inline-block;
-                width: 3vw;
-                height: 3vw;
+                width: 48px;
+                height: 48px;
                 border-radius: 50%;
                 background-color: darkred;
                 display: flex;
@@ -52,8 +52,17 @@
                 color: white;
                 box-shadow: 0px 2px 5px rgba(0,0,0,0.45);
                 margin: 16px;
-            }
+            }        
+            pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }    
         </style>
+    </head>
+    <body>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/styles/default.min.css">
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.0.3/build/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
         <div class="content">
             <h1>atoms</h1>
             <h2>the task</h2>
@@ -72,17 +81,17 @@
                     <p class="center">$q_1$ and $q_2$ are the charges of the 2 bodies</p>
                     <p class="center">and $r$ is the distance of separation between the 2 bodies.</p>
                     <p>In this demo, I used the true values of $k$, $q_\text{tritium}$ and $q_\text{deuterium}$ in SI units:</p>
-                    <pre>const k = 8.9875517923 * 10**9, qT = qD = 1.60217662 * 10**-19</pre>
+                    <pre><code class="js">const k = 8.9875517923 * 10**9, qT = qD = 1.60217662 * 10**-19</code></pre>
                 <h3>physical properties of the nuclei</h3>
                     <p>I also used true values for the masses of tritium and deuterium nuclei in a.m.u (atomic mass units):</p>
-<pre>const amu = 1.66053906660* 10**-27;
-let mT = 3.0160492 * amu, mD = 2.01410177811 * amu;</pre>
+<pre><code class="js">const amu = 1.66053906660* 10**-27;
+let mT = 3.0160492 * amu, mD = 2.01410177811 * amu;</code></pre>
                     <p>After that, I set the starting speed to be $1\text{ms}^{-1}$. I also defined the rightwards direction to be positive:</p>
-<pre>const startSpeed = 1;
-let vT = startSpeed, vD = -startSpeed;</pre>
+<pre><code class="js">const startSpeed = 1;
+let vT = startSpeed, vD = -startSpeed;</code></pre>
                 <h3>the world scale</h3>
                     <p>Lastly, since true values were used for the physical quantities, the actual distance traveled by the nuclei was very small. In order to view the animation on a screen, I had to scale the world down:</p>
-<pre>const worldScale = 0.001;</pre>
+<pre><code class="js">const worldScale = 0.001;</code></pre>
                     <p>$\frac{1}{\text{worldScale}}$ was then multiplied to the physical quantities during calculations so that the movements of the nuclei was obvious enough to view on a computer screen.</p>
             <h2>how the code works</h2>
                 <h3>summary of how the code works</h3>
@@ -101,29 +110,28 @@ let vT = startSpeed, vD = -startSpeed;</pre>
                 <h3>step 4: calculate accelerations of the nuclei</h3>
                     <p>In this scenario, the coulomb force was the net force because it was the only force acting on the nuclei.</p>
                     <p>Hence I applied Newton's Second Law, $F_\text{net}=ma$, to find the accelerations of the 2 nuclei:</p>
-<pre>aT = -coulombForce / mT;
-aD = coulombForce / mD;</pre>
+<pre><code class="js">aT = -coulombForce / mT;
+aD = coulombForce / mD;</code></pre>
                 <h3>step 5: calculate velocities of the nuclei</h3>
                     <p>Since we are dealing with very small time intervals $dt$ in the animation, we can just do $dv=adt$ and we will obtain the infinitesimal <b>change</b> in velocity.</p>
                     <p>To update the actual velocity value, we just need to add $dv$ to the existing velocity.</p>
-<pre>vT += aT * dt;
-vD += aD * dt;</pre>
-                <h3>step 6: calcualte displacements of the nuclei</h3>
+<pre><code class="js">vT += aT * dt;
+vD += aD * dt;</code></pre>
+                <h3>step 6: calculate displacements of the nuclei</h3>
                     <p>Step 6's logic is similar to Step 5. We can do $ds=vdt$ and add $ds$ to $s_\text{old}$ to find $s_\text{new}$.</p>
                     <p>$\frac{1}{\text{worldScale}}$ was then multiplied to $s$ so that the animation is visible on screen.</p>
-<pre>sT += (vT * dt) * (1/worldScale);
-sD += (vD * dt) * (1/worldScale);</pre>
+<pre><code class="js">sT += (vT * dt) * (1/worldScale);
+sD += (vD * dt) * (1/worldScale);</code></pre>
                 <h3>step 7: redraw the nuclei</h3>
                     <p>Once the new displacements were calculated, the nuclei could be redrawn on the screen.</p>
                     <p>Each nuclei had a <code>left</code> property which represented how far it should be drawn from the <b>left boundary</b> of the screen.</p>
                     <p>By overwriting this value, the position of the nuclei on the screen could be changed.</p>
-<pre>tritiumNucleus.style.left = sT;
-deuteriumNucleus.style.left = sD;</pre>
+<pre><code class="js">tritiumNucleus.style.left = sT;
+deuteriumNucleus.style.left = sD;</code></pre>
                 <h3>step 8: repeat steps 1-7 really fast</h3>
                     <p>By updating the positions of the nuclei enough, the nuclei seemed like they were moving.</p>
                 <h3>relevant code</h3>
-<pre>
-function render() {
+<pre><code class="js">function render() {
     let r = Math.abs(sD - sT) * worldScale;
     coulombForce = (k * qT * qD)/(r**2);
     // tritium
@@ -136,7 +144,8 @@ function render() {
     vD += aD * dt;
     sD += (vD * dt) * (1/worldScale)
     deuteriumNucleus.style.left = sD;
-}</pre>
+}</code></pre>
+            <a href="../index.html">Go Back</a>
         </div>
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
         <script>
@@ -147,5 +156,5 @@ function render() {
             };
         </script>
         <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    </head>
+    </body>
 </html>

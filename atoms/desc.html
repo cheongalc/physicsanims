@@ -1,0 +1,151 @@
+<html>
+    <head>
+        <title>Description for atoms anim</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+             html, body {
+                display: block;
+                margin: 0;
+                padding: 0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                font-size: large;
+            }
+            .content {
+                max-width: 960px;
+                margin: auto;
+                padding: 16px;
+            }
+            h2 {
+                color: #4d4d4d;
+            }
+            h3 {
+                color: #7e7e7e;
+            }
+            .center {
+                text-align: center;
+            }
+            .nucleiContainer {
+                display: flex;
+                justify-content: center;
+            }
+            #tritiumNucleus {
+                width: 3vw;
+                height: 3vw;
+                border-radius: 50%;
+                background-color: darkblue;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                box-shadow: 0px 2px 5px rgba(0,0,0,0.45);
+                margin: 16px;
+            }
+            #deuteriumNucleus {
+                display: inline-block;
+                width: 3vw;
+                height: 3vw;
+                border-radius: 50%;
+                background-color: darkred;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                box-shadow: 0px 2px 5px rgba(0,0,0,0.45);
+                margin: 16px;
+            }
+        </style>
+        <div class="content">
+            <h1>atoms</h1>
+            <h2>the task</h2>
+                <p>A tritium nucleus and a deuterium nucleus move towards each other in a straight line.</p>
+                <p>They both have the same speed $v$.</p>
+                <p>The proton and the neutron have the same mass $m$.</p>
+                <p>Animate the interaction of these 2 nuclei as they approach and repel each other, and plot velocity-time and force-time graphs.</p>
+            <h2>summary of what i did</h2>
+                <p>Using the 3 web languages HTML, CSS and JavaScript, I created a webpage to simulate this interaction. The animation is powered by JavaScript. I also used an online JavaScript library, <code>chart.js</code>, in order to plot the graphs.</p>
+                <p>Below, I will go into detail how the animation was made.</p>
+            <h2>defining constants</h2>
+                <h3>coulomb force</h3>
+                    <p>The coulomb force is the force between 2 or more charged bodies. It is defined as</p>
+                    <p class="center">$F=k\frac{q_1q_2}{r^2}$</p>
+                    <p class="center">where $k$ is the Coulomb constant</p>
+                    <p class="center">$q_1$ and $q_2$ are the charges of the 2 bodies</p>
+                    <p class="center">and $r$ is the distance of separation between the 2 bodies.</p>
+                    <p>In this demo, I used the true values of $k$, $q_\text{tritium}$ and $q_\text{deuterium}$ in SI units:</p>
+                    <pre>const k = 8.9875517923 * 10**9, qT = qD = 1.60217662 * 10**-19</pre>
+                <h3>physical properties of the nuclei</h3>
+                    <p>I also used true values for the masses of tritium and deuterium nuclei in a.m.u (atomic mass units):</p>
+<pre>const amu = 1.66053906660* 10**-27;
+let mT = 3.0160492 * amu, mD = 2.01410177811 * amu;</pre>
+                    <p>After that, I set the starting speed to be $1\text{ms}^{-1}$. I also defined the rightwards direction to be positive:</p>
+<pre>const startSpeed = 1;
+let vT = startSpeed, vD = -startSpeed;</pre>
+                <h3>the world scale</h3>
+                    <p>Lastly, since true values were used for the physical quantities, the actual distance traveled by the nuclei was very small. In order to view the animation on a screen, I had to scale the world down:</p>
+<pre>const worldScale = 0.001;</pre>
+                    <p>$\frac{1}{\text{worldScale}}$ was then multiplied to the physical quantities during calculations so that the movements of the nuclei was obvious enough to view on a computer screen.</p>
+            <h2>how the code works</h2>
+                <h3>summary of how the code works</h3>
+                    <p>For every small time interval $dt=15\text{ms}$, I calculated the displacements of the 2 nuclei and redrew the nuclei with the new displacements.</p>
+                    <p>When this process is done fast enough, the brain perceives this to be a smooth animation.</p>
+                <h3>step 1: draw the nuclei</h3>
+                    <p>The nuclei were drawn using HTML. They are <code>div</code> elements that are styled to look like circles:</p>
+                    <div class="nucleiContainer">
+                        <div id="tritiumNucleus">T</div><div id="deuteriumNucleus">D</div>
+                    </div>
+                <h3>step 2: calculate distance of separation</h3>
+                    <p>Using JavaScript, it is possible to calculate the pixel distance between the centres of the 2 nuclei.</p>
+                    <p>I then multiplied the pixel distance by <code>worldScale</code> so that the calculations used true values in SI units.</p>
+                <h3>step 3: calculate coulomb force</h3>
+                    <p>Now that we had $r$, the distance of separation, the coulomb force was calculated using the formula stated above.</p>
+                <h3>step 4: calculate accelerations of the nuclei</h3>
+                    <p>In this scenario, the coulomb force was the net force because it was the only force acting on the nuclei.</p>
+                    <p>Hence I applied Newton's Second Law, $F_\text{net}=ma$, to find the accelerations of the 2 nuclei:</p>
+<pre>aT = -coulombForce / mT;
+aD = coulombForce / mD;</pre>
+                <h3>step 5: calculate velocities of the nuclei</h3>
+                    <p>Since we are dealing with very small time intervals $dt$ in the animation, we can just do $dv=adt$ and we will obtain the infinitesimal <b>change</b> in velocity.</p>
+                    <p>To update the actual velocity value, we just need to add $dv$ to the existing velocity.</p>
+<pre>vT += aT * dt;
+vD += aD * dt;</pre>
+                <h3>step 6: calcualte displacements of the nuclei</h3>
+                    <p>Step 6's logic is similar to Step 5. We can do $ds=vdt$ and add $ds$ to $s_\text{old}$ to find $s_\text{new}$.</p>
+                    <p>$\frac{1}{\text{worldScale}}$ was then multiplied to $s$ so that the animation is visible on screen.</p>
+<pre>sT += (vT * dt) * (1/worldScale);
+sD += (vD * dt) * (1/worldScale);</pre>
+                <h3>step 7: redraw the nuclei</h3>
+                    <p>Once the new displacements were calculated, the nuclei could be redrawn on the screen.</p>
+                    <p>Each nuclei had a <code>left</code> property which represented how far it should be drawn from the <b>left boundary</b> of the screen.</p>
+                    <p>By overwriting this value, the position of the nuclei on the screen could be changed.</p>
+<pre>tritiumNucleus.style.left = sT;
+deuteriumNucleus.style.left = sD;</pre>
+                <h3>step 8: repeat steps 1-7 really fast</h3>
+                    <p>By updating the positions of the nuclei enough, the nuclei seemed like they were moving.</p>
+                <h3>relevant code</h3>
+<pre>
+function render() {
+    let r = Math.abs(sD - sT) * worldScale;
+    coulombForce = (k * qT * qD)/(r**2);
+    // tritium
+    aT = -coulombForce / mT;
+    vT += aT * dt;
+    sT += (vT * dt) * (1/worldScale);
+    tritiumNucleus.style.left = sT;
+    // deuterium
+    aD = coulombForce / mD;
+    vD += aD * dt;
+    sD += (vD * dt) * (1/worldScale)
+    deuteriumNucleus.style.left = sD;
+}</pre>
+        </div>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script>
+            MathJax = {
+                tex: {
+                    inlineMath: [['$', '$']]
+                }
+            };
+        </script>
+        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </head>
+</html>
